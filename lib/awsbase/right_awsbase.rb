@@ -219,6 +219,26 @@ module RightAws
         if aws_access_key_id.blank? || aws_secret_access_key.blank?
       @aws_access_key_id     = aws_access_key_id
       @aws_secret_access_key = aws_secret_access_key
+      # if proxy is defined, sanitise it
+      if @params[:proxy]
+        ## proxy expected to have the following options
+        ## :endpoint_url => the proxy endpoint - scheme is ignored
+        ## :address => the proxy server address
+        ## :port => the proxy server port
+        ## :username => the proxy server auth username
+        ## :password => the proxy server auth password
+        ## if endpoint is specified, it will override :address and :port
+        ## :username and :password are optional
+        ## :username and :password are optional
+        proxy = @params[:proxy]
+        if proxy[:endpoint_url]
+          url = URI.parse(proxy[:endpoint_url])
+          proxy[:address] = url.host
+          proxy[:port] = url.port
+        end
+        raise AwsError.new("Proxy data not correctly specified #{@params[:proxy]}") \
+          if proxy[:address].blank? || proxy[:port].blank?
+      end
       # if the endpoint was explicitly defined - then use it
       if @params[:endpoint_url]
         @params[:server]   = URI.parse(@params[:endpoint_url]).host
@@ -347,6 +367,8 @@ module RightAws
       end
       # prepare output hash
       { :request  => request,
+        ## added proxy to outpup - FC
+        :proxy    => @params[:proxy],
         :server   => @params[:server],
         :port     => @params[:port],
         :protocol => @params[:protocol] }
@@ -364,7 +386,8 @@ module RightAws
       #
       @connections_storage[server_url] ||= {}
       @connections_storage[server_url][:last_used_at] = Time.now
-      @connections_storage[server_url][:connection] ||= Rightscale::HttpConnection.new(:exception => RightAws::AwsError, :logger => @logger)
+      ## pass proxy params to the HttpConnection
+      @connections_storage[server_url][:connection] ||= Rightscale::HttpConnection.new(:exception => RightAws::AwsError, :logger => @logger, :proxy => request[:proxy])
       # keep X most recent connections (but were used not far than Y minutes ago)
       connections = 0
       @connections_storage.to_a.sort{|i1, i2| i2[1][:last_used_at] <=> i1[1][:last_used_at]}.to_a.each do |i|
