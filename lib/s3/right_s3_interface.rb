@@ -171,7 +171,8 @@ module RightAws
       { :request  => request, 
         :server   => server,
         :port     => @params[:port],
-        :protocol => @params[:protocol] }
+        :protocol => @params[:protocol],
+        :proxy    => @params[:proxy] }
       end
       
       # Sends request to Amazon and parses the response.
