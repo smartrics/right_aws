@@ -47,7 +47,9 @@ module RightAws
 
     # Set a timestamp and a signature version
     def self.fix_service_params(service_hash, signature)
-      service_hash["Timestamp"] ||= Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.000Z") unless service_hash["Expires"]
+      ## modified to work with eucalyptus by removing .utc.
+      service_hash["Timestamp"] ||= Time.now.strftime("%Y-%m-%dT%H:%M:%S.000Z") unless service_hash["Expires"]
+      #service_hash["Timestamp"] ||= Time.now.utc.strftime("%Y-%m-%dT%H:%M:%S.000Z") unless service_hash["Expires"]
       service_hash["SignatureVersion"] = signature
       service_hash
     end
